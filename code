@@ -1,0 +1,112 @@
+import datetime
+import requests
+import json
+import random  # Added for empathy phrase selection
+import os      # Added for safer file path handling in self_improve
+
+class HermesAI:
+    # Corrected constructor name: __init__
+    def __init__(self):
+        self.schedule = {}
+        self.email_responses = []
+        self.media_discussions = []
+        print("I am Hermes, your personal assistant. How can I assist you today?")
+
+    def schedule_appointment(self):
+        # Basic input, no validation added here but recommended for robust app
+        date = input("Enter the appointment date (YYYY-MM-DD): ")
+        time = input("Enter the appointment time (e.g., 10:00 AM): ")
+        description = input("Enter the appointment description: ")
+        if date not in self.schedule:
+            self.schedule[date] = []
+        self.schedule[date].append((time, description))
+        print(f"Appointment scheduled on {date} at {time}: {description}")
+
+    def respond_to_email(self):
+        sender = input("Enter the sender's name: ")
+        subject = input("Enter the email subject: ")
+        message = input("Enter the message content (optional, press Enter to skip): ") # Made optional
+        response = self.create_empathetic_response(sender, subject, message) # Corrected method name typo
+        self.email_responses.append((sender, subject, response))
+        print("\n--- Generated Response ---")
+        print(response)
+        print("------------------------")
+
+
+    def write_story(self):
+        prompt = input("Enter the story prompt: ")
+        # Simple story generation
+        print(f"\n--- Story ---")
+        print(f"Once upon a time, {prompt}... and so the legend of Hermes continues.")
+        print("-------------")
+
+    def handle_media_discussion(self):
+        topic = input("Enter the media topic: ")
+        # Placeholder discussion generation
+        discussion = f"Analyzing media trends related to {topic}... Here’s a brief summary of key points and insights."
+        self.media_discussions.append(discussion)
+        print(f"\n--- Media Discussion ---")
+        print(discussion)
+        print("------------------------")
+
+    def get_schedule(self) -> dict:
+        return self.schedule
+
+    def get_email_responses(self) -> list:
+        return self.email_responses
+
+    def get_media_discussions(self) -> list:
+        return self.media_discussions
+
+    def fetch_internet_data(self, query: str):
+        print(f"\nFetching data for: {query}...")
+        # Added basic error handling for network and JSON issues
+        try:
+            # Use DuckDuckGo Instant Answer API (Zero-click Info)
+            # t=hermesai sets a custom user agent hint (optional)
+            url = f"https://api.duckduckgo.com/?q={requests.utils.quote(query)}&format=json&t=hermesai&no_html=1&skip_disambig=1"
+            response = requests.get(url, timeout=10) # Added timeout
+            response.raise_for_status() # Raise an exception for bad status codes (4xx or 5xx)
+
+            data = response.json() # Use response.json() which handles decoding
+
+            # Try to get AbstractText, Abstract, or related topics
+            abstract = data.get("AbstractText") or data.get("Abstract")
+            related_topics = data.get("RelatedTopics", [])
+
+            if abstract:
+                print("\n--- DuckDuckGo Abstract ---")
+                print(abstract)
+                print("--------------------------")
+            elif related_topics and 'Text' in related_topics[0]:
+                 # Sometimes the main result is in the first related topic
+                 print("\n--- DuckDuckGo Result ---")
+                 print(related_topics[0]['Text'])
+                 print("------------------------")
+            else:
+                print("No direct abstract found via DuckDuckGo Instant Answer API.")
+                # Optional: You could print related topics if available
+                # if related_topics:
+                #    print("\nRelated Topics might exist:")
+                #    for topic in related_topics[:3]: # Show first few
+                #         if 'Text' in topic: print(f"- {topic['Text']}")
+
+
+        except requests.exceptions.RequestException as e:
+            print(f"Error during request to DuckDuckGo API: {e}")
+        except json.JSONDecodeError:
+            print("Error: Could not decode JSON response from DuckDuckGo API.")
+        except Exception as e:
+            print(f"An unexpected error occurred: {e}")
+
+    # Corrected spelling: empathetic
+    def create_empathetic_response(self, sender: str, subject: str, message: str) -> str:
+        empathy_phrases = [
+            "I understand this is important.",
+            "Thank you for explaining the situation.",
+            "I appreciate you reaching out.",
+            "Let's see how I can best assist with this.",
+            "I've received your message regarding this.",
+        ]
+        # Use random.choice to vary the response slightly
+        chosen_phrase = random.cho
